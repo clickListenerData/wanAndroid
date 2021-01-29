@@ -6,6 +6,8 @@ import 'package:flutter/widgets.dart';
 import 'package:wan_android/http/ApiManager.dart';
 import 'package:wan_android/model/coin_list_bean.dart';
 import 'package:wan_android/model/my_share_list.dart';
+import 'package:wan_android/model/response_bean.dart';
+import 'package:wan_android/view/person/coin_rank_page.dart';
 
 class PersonCoinPage extends StatefulWidget {
   @override
@@ -36,7 +38,9 @@ class PersonCoinState extends State<PersonCoinPage> {
         centerTitle: true,
         actions: [
           GestureDetector(
-            onTap: () {},
+            onTap: () {
+              Navigator.push(context, MaterialPageRoute(builder: (context) => CoinRankPage()));
+            },
             child: Icon(Icons.leaderboard),
           )
         ],
@@ -59,6 +63,7 @@ class PersonCoinState extends State<PersonCoinPage> {
       );
     } else {
       return Container(
+        alignment: Alignment.center,
         child: CircularProgressIndicator(),
       );
     }
@@ -66,7 +71,7 @@ class PersonCoinState extends State<PersonCoinPage> {
 
   void getCoinData() async {
     final personCoin = await ApiManager.instance.getPersonCoin();
-    final coinList = await ApiManager.instance.getCoinList(curPage);
+    BaseResponse<CoinListBean<CoinItemBean>> coinList = await ApiManager.instance.getCoinList(curPage);
     setState(() {
       isShow = true;
       datas.clear();

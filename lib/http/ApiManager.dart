@@ -169,15 +169,36 @@ class ApiManager {
     });
   }
 
-  Future<BaseResponse<CoinListBean>> getCoinList(int page) async {
+  Future<BaseResponse<CoinListBean<CoinItemBean>>> getCoinList(int page) async {
     return httpResponse("lg/coin/list/$page/json", (bean, response) {
-      parseBean(bean, response, (json) => CoinListBean.fromJson(json));
+      parseBean(bean, response, (json) {
+        final data = CoinListBean<CoinItemBean>.fromJson(json);
+        final itemData = json['datas'];
+        if (itemData is List) {
+          data.datas = <CoinItemBean>[];
+          itemData.forEach((element) {
+            data.datas.add(CoinItemBean.fromJson(element));
+          });
+        }
+        return data;
+      });
     });
   }
 
-  Future<BaseResponse<CoinListBean>> getRankList(int page) async {
-    return httpResponse("lg/coin/list/$page/json", (bean, response) {
-      parseBean(bean, response, (json) => CoinListBean.fromJson(json));
+  Future<BaseResponse<CoinListBean<CoinInfoBean>>> getRankList(int page) async {
+    return httpResponse("coin/rank/$page/json", (bean, response) {
+      parseBean(bean, response, (json) {
+        final data = CoinListBean<CoinInfoBean>.fromJson(json);
+        final itemData = json['datas'];
+        print("coin rank:::${itemData}");
+        if (itemData is List) {
+          data.datas = <CoinInfoBean>[];
+          itemData.forEach((element) {
+            data.datas.add(CoinInfoBean.fromJson(element));
+          });
+        }
+        return data;
+      });
     });
   }
 
