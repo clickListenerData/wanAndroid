@@ -1,15 +1,18 @@
 
 
 import 'dart:async';
-import 'dart:html';
 import 'dart:io';
 
 import 'package:dio/dio.dart';
-import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:wan_android/const/sp_const_key.dart';
+import 'package:wan_android/http/cookie_manager.dart';
 import 'package:wan_android/model/Navigator_list_bean.dart';
+import 'package:wan_android/model/coin_list_bean.dart';
 import 'package:wan_android/model/home_article_bean.dart';
 import 'package:wan_android/model/home_banner_bean.dart';
 import 'package:wan_android/model/login_bean.dart';
+import 'package:wan_android/model/my_share_list.dart';
 import 'package:wan_android/model/project_tab.dart';
 import 'package:wan_android/model/response_bean.dart';
 import 'package:wan_android/model/answer_list_bean.dart';
@@ -39,8 +42,8 @@ class ApiManager {
       receiveTimeout: 3000,
     );
     dio = Dio(options);
+    dio.interceptors.add(CustomIntercept());
   }
-
 
   Future<BaseResponse<T>> httpResponse<T>(String url,BaseCall<T> call,{Map<String,dynamic> params}) async {
     try {
@@ -134,8 +137,53 @@ class ApiManager {
     },params: {"k":"$key"});
   }
 
+  Future<BaseResponse<HomeArticleBean>> collectList(int page) async {
+    return httpResponse("lg/collect/list/$page/json", (bean, response) {
+      parseBean(bean, response, (json) => HomeArticleBean.fromJson(json));
+    });
+  }
+
+  Future<BaseResponse<dynamic>> unCollect(int id,int originId) async {
+    final response = httpPostResponse("lg/uncollect/$id/json", (bean, response) {
+      print("uncollect::${response.data}");
+    },params: {"originId":"$originId"});
+    return response;
+  }
+
+  Future<BaseResponse<ShareListBean>> shareList(int page) async {
+    return httpResponse("user/lg/private_articles/$page/json", (bean, response) {
+      parseBean(bean, response, (json) => ShareListBean.fromJson(json));
+    });
+  }
+
+  Future<BaseResponse<dynamic>> deleteShare(int id) async {
+    final response = httpPostResponse("lg/user_article/delete/$id/json", (bean, response) {
+      print("delete share::${response.data}");
+    });
+    return response;
+  }
+
+  Future<BaseResponse<CoinInfoBean>> getPersonCoin() async {
+    return httpResponse("lg/coin/userinfo/json", (bean, response) {
+      parseBean(bean, response, (json) => CoinInfoBean.fromJson(json));
+    });
+  }
+
+  Future<BaseResponse<CoinListBean>> getCoinList(int page) async {
+    return httpResponse("lg/coin/list/$page/json", (bean, response) {
+      parseBean(bean, response, (json) => CoinListBean.fromJson(json));
+    });
+  }
+
+  Future<BaseResponse<CoinListBean>> getRankList(int page) async {
+    return httpResponse("lg/coin/list/$page/json", (bean, response) {
+      parseBean(bean, response, (json) => CoinListBean.fromJson(json));
+    });
+  }
+
   Future<BaseResponse<LoginBean>> login(String userName,String password) async {
-    final response = httpPostResponse("user/login", (bean, response) {
+    final response = httpPostResponse<LoginBean>("user/login", (bean, response) {
+      CookieManager.saveCookie(response.headers[HttpHeaders.setCookieHeader],true);
       parseBean(bean, response, (json) => LoginBean.fromJson(json));
     },params: {"username" : "$userName","password" : "$password"});
     // var cookie = Cookie.fromSetCookieValue("value");
@@ -144,19 +192,18 @@ class ApiManager {
   }
 
   Future<BaseResponse<LoginBean>> register(String userName,String password,String repassword) async {
-    final response = httpPostResponse("user/register", (bean, response) {
-      print("${response.data}");
-      // parseBean(bean, response, (json) => LoginBean.fromJson(json));
+    final response = httpPostResponse<LoginBean>("user/register", (bean, response) {
+      parseBean(bean, response, (json) => LoginBean.fromJson(json));
     },params: {"username" : "$userName","password" : "$password","repassword":"$repassword"});
-    // var cookie = Cookie.fromSetCookieValue("value");
-    // cookie.expires
     return response;
   }
 
-  void logout() async {
-    httpResponse("user/logout/json", (bean, response) {
+  Future<BaseResponse<dynamic>> logout() async {
+    CookieManager.clearCookie();
+    final response = httpResponse("user/logout/json", (bean, response) {
       print("${response.data}");
     });
+    return response;
   }
 
   void parseListBean<T>(BaseResponse<List<T>> bean,Response response,InitBean init) {
@@ -181,5 +228,18 @@ class ApiManager {
 
   void parseHomeBanner(BaseResponse<List<HomeBannerBean>> bean,Response response) {
     parseListBean(bean, response, (json) => HomeBannerBean.fromJson(json));
+  }
+}
+
+class CustomIntercept extends Interceptor {
+  @override
+  Future onRequest(RequestOptions options) {
+    options.headers[HttpHeaders.cookieHeader] = CookieManager.getCookieHeader();
+    return super.onRequest(options);
+  }
+
+  @override
+  Future onResponse(Response response) {
+    return super.onResponse(response);
   }
 }

@@ -6,6 +6,9 @@ import 'package:wan_android/view/answer_list_page.dart';
 import 'package:wan_android/view/drawer_page.dart';
 import 'package:wan_android/view/home_page.dart';
 import 'package:wan_android/view/navigator_page.dart';
+import 'package:wan_android/view/person/person_article_page.dart';
+import 'package:wan_android/view/person/person_coin_page.dart';
+import 'package:wan_android/view/person/share_list_page.dart';
 import 'package:wan_android/view/project_list_page.dart';
 import 'package:wan_android/view/project_page.dart';
 import 'package:wan_android/view/search_page.dart';
@@ -19,6 +22,11 @@ class MainLessPage extends StatelessWidget {
       initialRoute: "/",
       routes: {
         "/" : (context) => MainPage(),
+        "/person/article": (context) => PersonArticlePage(),
+        "/person/share": (context) => ShareListPage(),
+        "/person/coin": (context) => PersonCoinPage(),
+
+
       },
     );
   }
@@ -45,6 +53,8 @@ class MainPageState extends State<MainPage> {
 
   bool centerTitle = true;
 
+  double get maxHeight => MediaQuery.of(context).size.height;
+
   @override
   void initState() {
     super.initState();
@@ -70,10 +80,15 @@ class MainPageState extends State<MainPage> {
   }
 
   Widget getBody() {
-    return SlideStack(SlideContainer(
+    return SlideStack(
+        SlideContainer(
       getBodyContainer(),
       key: _slideKey,
       drawerSize: maxSlideDistance,
+      onSlide: (value) {
+        _slideKey.currentState.setContainerHeight((maxHeight * (1 - value / 5)));
+        _slideKey.currentState.heightOffset = maxHeight * value / 10;
+      },
       // transform: Matrix4.translationValues(0.0,height * position / 10, 0.0),
     ), PersonPage());
   }

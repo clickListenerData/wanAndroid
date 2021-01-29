@@ -75,7 +75,7 @@ class SlideContainer extends StatefulWidget {
     this.onSlideCompleted,
     this.onSlideCanceled,
     this.onSlide,
-    this.transform
+    this.transform,
   }
     ) : assert(child != null),
   assert(slideDirection != null),
@@ -107,23 +107,23 @@ class ContainerState extends State<SlideContainer> with TickerProviderStateMixin
 
   double get minAutoSlideDistance => widget.minAutoSlideDistance ?? maxDragDistance * 0.5;
 
+  double get maxHeight => MediaQuery.of(context).size.height;
+
   double get containerOffset => animationController.value * maxDragDistance * dragTarget.sign;  // sign target 得符号 -1 或 +1
 
-  double get height => MediaQuery.of(context).size.height;
+  double heightOffset = 0.0;
 
-  double get heightOffset => height * animationController.value / 10;
+  double height = 0.0;
 
   @override
   void initState() {
     animationController = AnimationController(vsync: this,duration: widget.autoSlideDuration)
     ..addListener(() {
-        if(widget.onSlide != null) {
-          widget.onSlide(animationController.value);
-        } else {
           setState(() {
-
+            if(widget.onSlide != null) {
+              widget.onSlide(animationController.value);
+            }
           });
-        }
     });
     fingerTicker = createTicker((elapsed) {
       if ((dragValue - dragTarget).abs() < 1.0) {
@@ -136,6 +136,10 @@ class ContainerState extends State<SlideContainer> with TickerProviderStateMixin
     registerGestureRecognizer();
     super.initState();
 
+  }
+
+  void setContainerHeight(double height) {
+    this.height = height;
   }
 
   @override
@@ -222,9 +226,10 @@ class ContainerState extends State<SlideContainer> with TickerProviderStateMixin
   }
 
   Widget getContainer() {
+    if (height == 0) height = maxHeight;
     if (hasShadow) {
       return Container(
-        height: height * (1 - animationController.value / 5),
+        height: height,
         child: widget.child,
         decoration: BoxDecoration(
           boxShadow: [

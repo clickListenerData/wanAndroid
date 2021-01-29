@@ -1,9 +1,16 @@
 
 
+import 'dart:io';
+import 'dart:math';
 import 'dart:ui';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:wan_android/const/sp_const_key.dart';
+import 'package:wan_android/http/ApiManager.dart';
+import 'package:wan_android/model/login_bean.dart';
 import 'package:wan_android/view/person/login_register_page.dart';
 
 class _MenuInfo {
@@ -30,6 +37,16 @@ class PersonPage extends StatefulWidget {
 }
 
 class PersonPageState extends State<PersonPage> {
+
+  String userName = " WAN ANDROID ";
+  bool isLogin = false;
+
+  @override
+  void initState() {
+    super.initState();
+    initUserName();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -44,14 +61,12 @@ class PersonPageState extends State<PersonPage> {
         alignment: Alignment.centerLeft,
         padding: EdgeInsets.only(left: 80,top: 60),
         child: GestureDetector(
-          onTap: () {
-            Navigator.push(context,new MaterialPageRoute(builder: (context) => LoginPage()));
-          },
+          onTap: routeLogin,
           child: Column(
             children: [
               Image.asset("images/ic_launcher_round.png"),
               Padding(padding: EdgeInsets.only(top: 14)),
-              Text(" WAN ANDROID ",style: TextStyle(fontSize: 14,color: Colors.white),),
+              Text(userName,style: TextStyle(fontSize: 14,color: Colors.black),),
             ],
           ),
         ),
@@ -62,7 +77,7 @@ class PersonPageState extends State<PersonPage> {
         }
         return InkWell(
           onTap: () {
-
+            listItemClick(index - 1);
           },
           child: Column(
             children: [
@@ -82,6 +97,68 @@ class PersonPageState extends State<PersonPage> {
         );
       },itemCount: menus.length + 1,),
     );
+  }
+
+  void routeLogin() async {
+    final result = await Navigator.push(context,new MaterialPageRoute(builder: (context) => LoginPage()));
+    if (result is LoginBean) {
+      setState(() {
+        isLogin = true;
+        userName = result.nickname;
+      });
+    }
+  }
+
+  void listItemClick(int index) {
+    if (!isLogin && index != menus.length - 2) {
+      Fluttertoast.showToast(msg: "请先登录",fontSize: 16,gravity: ToastGravity.CENTER);
+      return;
+    }
+    if (index == menus.length - 1) {
+      showLogoutConfirm();
+      return;
+    }
+    if(index == 2) Navigator.pushNamed(context, "/person/article");
+    if(index == 3) Navigator.pushNamed(context, "/person/share");
+    if (index == 0) Navigator.pushNamed(context, "/person/coin");
+
+  }
+
+  void showLogoutConfirm() async {
+    await showDialog(context: context,builder: (context) => AlertDialog(
+      title: Text("退出登录"),
+      content: Text("确认退出登录吗？"),
+      actions: [
+        RaisedButton(onPressed: () {
+          Navigator.of(context).pop();
+        },child: Text("取消",style: TextStyle(color: Colors.grey),),),
+        RaisedButton(onPressed: () {
+          ApiManager.instance.logout().then((value) {
+            Navigator.of(context).pop();
+            if (value.isSuccess()) {
+              setState(() {
+                isLogin = false;
+                userName = " WAN ANDROID ";
+              });
+            } else {
+              Fluttertoast.showToast(msg: value.errorMsg,fontSize: 16,gravity: ToastGravity.CENTER);
+            }
+          });
+        },child: Text("确认",style: TextStyle(color: Colors.blue),),)
+      ],
+    ));
+  }
+
+  void initUserName() async {
+    final sp = await SharedPreferences.getInstance();
+    final name = sp.getString(SpConst.NICK_NAME);
+    final login = sp.getBool(SpConst.IS_LOGIN);
+    if (name.isNotEmpty) {
+      setState(() {
+        userName = name;
+        isLogin = login;
+      });
+    }
   }
 
 

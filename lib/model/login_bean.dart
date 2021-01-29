@@ -30,7 +30,7 @@ class LoginBean {
     collectIds = [];
     if (data is List) {
       data.forEach((element) {
-        collectIds.add(element);
+        collectIds.add(element.toString());
       });
     }
 

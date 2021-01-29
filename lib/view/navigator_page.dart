@@ -29,14 +29,17 @@ class NavigatorPageState extends State<NavigatorPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text("导航"),
-        centerTitle: true,
+    return Container(
+      width: MediaQuery.of(context).size.width * 0.7,
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text("导航"),
+          centerTitle: true,
+        ),
+        body: ListView.builder(itemBuilder: (context,index) {
+          return createTab(datas[index]);
+        },itemCount: datas.length,),
       ),
-      body: ListView.builder(itemBuilder: (context,index) {
-        return createTab(datas[index]);
-      },itemCount: datas.length,),
     );
   }
 

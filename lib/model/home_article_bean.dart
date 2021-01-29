@@ -58,6 +58,8 @@ class HomeArticle {
   int userId;
   int visible;
   int zan;
+  int originId;
+  int audit;
 
   HomeArticle( {this.apkLink,
     this.author,
@@ -105,5 +107,7 @@ class HomeArticle {
     userId = json['userId'];
     visible = json['visible'];
     zan = json['zan'];
+    originId = json['originId'];
+    audit = json['audit'];
   }
 }
